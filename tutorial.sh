@@ -1,0 +1,1 @@
+python tools/playgame.py "python MyBot.py" "python tools/sample_bots/python/HunterBot.py" --map_file tools/maps/cell_maze/cell_maze_p02_04.map --log_dir game_logs --turns 200 --player_seed 7 --verbose -e
