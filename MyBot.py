@@ -1,11 +1,18 @@
 #!/usr/bin/env python
 from ants import *
+import random
 
+ATTACK = 0
+GATHER = 1
+LEAD = 2
+EXPLORE = 3
 
-HUNTER = 0
-GATHERER = 1
-LEADER = 2
-EXPLORER = 3
+######################### AI Execution Order ###########################
+# Determine Priority
+# Determine shortest path
+# Execute
+# Redertimine priority defaulting to existing priority
+########################################################################
 
 
 class IndividualAnt():
@@ -13,12 +20,16 @@ class IndividualAnt():
     max_id = 0
     
     def __init__(self, loc):
+
         self.loc = loc
+        self.target = None
         self.alive = True
-        self.state = EXPLORER
+        self.priority = EXPLORE
+        self.goal_met = False
         self.uid = -1
 
     def assignUID(self):
+
         self.uid = self.max_id + 1
         self.max_id += 1
 
@@ -30,6 +41,7 @@ class MyBot:
         self.ants_dict = {}
         self.pending_moves= []
         self.game = None
+        self.actions = {3: self.explore}
 
     def do_setup(self, ants):
         pass
@@ -44,11 +56,29 @@ class MyBot:
             ant = self.ants_dict[loc]
         return ant        
 
-    def assignJob(self, ant):
+    def assignPriority(self, ant):
 
         pass
 
-    def updateAntData(ant, new_loc):
+    def explore(self, ant):
+
+        if not ant.target:
+            ant.target = (random.choice(range(self.game.map[0])),
+                          random.choice(range(self.game.map[1])))
+            if not self.game.passable(ant.target):
+                ant.target = None
+                self.explore(ant)
+                return            
+                
+
+    def startPriorityAction(self, ant):
+
+        if ant.goal_met:
+            pass # TODO: determine next priority
+        else:
+            self.actions[ant.priority](ant)
+
+    def updateAntData(self, ant, new_loc):
 
         self.pending_moves.append(new_loc)
         self.ants_dict[new_loc] = self.ants_dict.pop(ant.loc)
@@ -60,13 +90,15 @@ class MyBot:
         if (self.game.passable(new_loc)) and (
                 new_loc not in self.pending_moves):
             self.game.issue_order((ant.loc, direction))
+            self.updateAntData(ant, new_loc)
             return True
 
     def do_turn(self, ants):
 
         self.pending_moves = []
-        self.game = ants
-        loc_list = self.ants_dict.iterkeys()
+        if not self.game:
+            self.game = ants
+        loc_list = self.ants_dict.keys()[:] # This sucks
         for loc in self.game.my_ants():
             ant = self.getAnt(loc, loc_list)
             directions = ('n','e','s','w')
