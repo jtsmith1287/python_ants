@@ -22,28 +22,26 @@ def distance(loc1, loc2):
 
 def passable(loc):
     row, col = loc
-    if row < 0 or col < 0:
-        print "Off the map... tisk tisk"
+    if (row < 0) or (row > 19) or (col < 0) or (col > 19):
         return False
-    try:
-        if map[row][col] != "[W]":
-            return True
-    except IndexError:
-        return False
+    if map[row][col] != "[W]":
+        return True
     else:
-        print "That's water... can't pass"
         return False
 
 def run():
     Game = namedtuple("Game", ["distance", "passable"])
     Ant = namedtuple("Ant", ["loc", "target"])
     game = Game(distance, passable)
-    ant = Ant((0, 10), (19, 19))
-    map[0][10] = ["A"]
+    ant = Ant((0, 0), (19, 19))
+    map[19][19] = "[ ]"
+    map[0][0] = ["[A]"]
     
     awesome = pathfinder.Pathfinder()
     
     path = awesome.findShortestPath(ant, game)
+    if not path:
+        print "No path was found."
     for node in path:
         x, y = ant.loc
         map[x][y] = "[#]"
@@ -51,10 +49,12 @@ def run():
         map[x][y] = "[A]"
         for row in map:
             print "".join(row)
-        time.sleep(2)
+        time.sleep(.25)
 
 
 if __name__ == "__main__":
+    for row in map:
+        print "".join(row)
     run()
     for row in map:
         print "".join(row)

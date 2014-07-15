@@ -1,7 +1,13 @@
 
-LOC = 0
-PARENT = 1
-SCORE_G = 2
+import time
+from collections import namedtuple
+
+
+Node = namedtuple("Node", ["loc", "parent", "g", "f"])
+
+
+class EmptyNodeListError(Exception): pass
+
 
 class Pathfinder():
 
@@ -13,40 +19,54 @@ class Pathfinder():
             idx = 0
         return open_nodes.pop(idx)
 
+    def getAdjacentLocs(self, node):
+
+        # loop over      north     east    south    west
+        for direction in ((-1, 0), (0, 1), (1, 0), (0, -1)):
+            x, y = [x + y for x, y in zip(node.loc, direction)]
+            yield (x, y)
+
+    def constructPath(self, node, searched):
+
+        print "Target destination reached"
+        path = []
+        while node.loc != node.parent:
+            path.append(node.loc)
+            node = searched[node.parent]
+        print path
+        return path
+
     def findShortestPath(self, ant, game):
-        
-        # Start and end locations
-        beginning = [list(ant.loc), list(ant.loc), 0]
-        end = list(ant.target)
-        # Node data tracking
-        open_nodes = []
-        closed_nodes = []
-        f_scores = []
-        checked_nodes = 0
-        # Set starting node
-        open_nodes.append(beginning)
-        
-        # Begin loop... here we go
-        while open_nodes:
-            checked_nodes += 1
-            current_node = self.getBestNode(open_nodes, f_scores)
-            current_loc = current_node[LOC]
-            if current_loc not in closed_nodes:
-                closed_nodes.append(current_loc)
-            # loop over      north     east    south    west
-            for direction in ((0, -1), (0, 1), (1, 0), (0, -1)):
-                # Get the actual map coordinates of the direction
-                possible_loc = [x + y for x, y in zip(current_loc, direction)]
-                if possible_loc == end:
-                    closed_nodes.append(possible_loc)
-                    return closed_nodes
-                if game.passable(possible_loc) and possible_loc not in closed_nodes:
-                    if possible_loc not in open_nodes:
-                        f = game.distance(current_loc, possible_loc) + checked_nodes
-                        #               Location      Parent       G score        F score
-                        open_nodes.append([possible_loc, current_loc, checked_nodes])
-                        f_scores.append(f)
-            
+
+        reachable_nodes = {tuple(ant.loc): Node(ant.loc, ant.loc, 0, 0)}
+        searched_nodes = {}
+        beginning = ant.loc
+        end = ant.target
+        heap = []
+
+        while reachable_nodes:
+            try:
+                # This will get replaced with node scoring
+                node_entry = sorted(reachable_nodes.iteritems())[0]
+                reachable_nodes.pop(node_entry[0])
+                current_node = node_entry[1]
+            except IndexError:
+                raise EmptyNodeListError
+            if current_node.loc == end:
+                return self.constructPath(current_node, searched_nodes)
+            searched_nodes[current_node.loc] = current_node
+            adjacent_locs = self.getAdjacentLocs(current_node)
+            for loc in adjacent_locs:
+                if loc not in reachable_nodes and loc not in searched_nodes:
+                    if game.passable(loc):
+                        # Get the distance from the parent for its G score
+                        g = game.distance(loc, beginning)
+                        # Get the F rating (total predicted path distance)
+                        f = game.distance(loc, end) + g
+                        node = Node(loc, current_node.loc, g, f)
+                        reachable_nodes[loc] = node
+        # For now, this means we're boxed in and the target was unreachable
+        return None
             
     def findSafestPath(self, ant, game):
         
