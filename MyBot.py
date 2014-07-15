@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from ants import *
+from pathfinder import Pathfinder
 import random
 
 ATTACK = 0
@@ -42,6 +43,7 @@ class MyBot:
         self.pending_moves= []
         self.game = None
         self.actions = {3: self.explore}
+        self.pathfinder = Pathfinder()
 
     def do_setup(self, ants):
         pass
@@ -98,7 +100,7 @@ class MyBot:
         self.pending_moves = []
         if not self.game:
             self.game = ants
-        loc_list = self.ants_dict.keys()[:] # This sucks
+        loc_list = self.ants_dict.keys() # This sucks
         for loc in self.game.my_ants():
             ant = self.getAnt(loc, loc_list)
             directions = ('n','e','s','w')
