@@ -1,6 +1,8 @@
 
 import time
-from collections import namedtuple
+from collections import namedtuple, OrderedDict
+import math
+
 
 
 Node = namedtuple("Node", ["loc", "parent", "g", "f"])
@@ -11,13 +13,18 @@ class EmptyNodeListError(Exception): pass
 
 class Pathfinder():
 
-    def getBestNode(self, open_nodes, f_scores):
+    def addToHeap(self, node, heap):
         
-        if f_scores:
-            idx = f_scores.index(min(f_scores))
-        else:
-            idx = 0
-        return open_nodes.pop(idx)
+        idx = len(heap) - 1
+        while idx > 0:
+            if node.f < heap[idx]:
+                if node.f < heap[idx - 1]:
+                    idx = math.floor(idx/2)            
+                    continue
+                else:
+                    heap.insert(idx - 1, node)
+            else:
+                heap.insert(idx, node)
 
     def getAdjacentLocs(self, node):
 
@@ -38,11 +45,10 @@ class Pathfinder():
 
     def findShortestPath(self, ant, game):
 
-        reachable_nodes = {tuple(ant.loc): Node(ant.loc, ant.loc, 0, 0)}
+        reachable_nodes = OrderedDict({tuple(ant.loc): Node(ant.loc, ant.loc, 0, 0)})
         searched_nodes = {}
         beginning = ant.loc
         end = ant.target
-        heap = []
 
         while reachable_nodes:
             try:
@@ -60,6 +66,7 @@ class Pathfinder():
                 if loc not in reachable_nodes and loc not in searched_nodes:
                     if game.passable(loc):
                         # Get the distance from the parent for its G score
+                        # TODO: This won't be perfect... make it perfect... someday
                         g = game.distance(loc, beginning)
                         # Get the F rating (total predicted path distance)
                         f = game.distance(loc, end) + g

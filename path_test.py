@@ -43,6 +43,7 @@ def run():
     if not path:
         print "No path was found."
     for node in path:
+        print "\n" * 50
         x, y = ant.loc
         map[x][y] = "[#]"
         x, y = node
